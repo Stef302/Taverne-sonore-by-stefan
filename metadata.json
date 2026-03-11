@@ -1,0 +1,7 @@
+{
+  "name": "La Taverne Sonore",
+  "description": "L'Automate d'Interprétation Graphique",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
