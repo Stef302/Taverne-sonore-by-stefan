@@ -3,53 +3,67 @@ import Soundfont from 'soundfont-player';
 
 export const instrumentOptions = [
   // Cuivres (Rouge)
-  { id: 'trumpet', name: 'Trompette', color: 'red' },
-  { id: 'french_horn', name: 'Cor d\'Harmonie', color: 'red' },
-  { id: 'trombone', name: 'Trombone', color: 'red' },
-  { id: 'tuba', name: 'Tuba', color: 'red' },
+  { id: 'trumpet', name: 'Trompette', color: 'red', shape: 'continuous' },
+  { id: 'french_horn', name: 'Cor d\'Harmonie', color: 'red', shape: 'continuous' },
+  { id: 'trombone', name: 'Trombone', color: 'red', shape: 'continuous' },
+  { id: 'tuba', name: 'Tuba', color: 'red', shape: 'angular' },
   
   // Cordes frottées (Orange)
-  { id: 'violin', name: 'Violon', color: 'orange' },
-  { id: 'cello', name: 'Violoncelle', color: 'orange' },
-  { id: 'contrabass', name: 'Contrebasse', color: 'orange' },
+  { id: 'violin', name: 'Violon', color: 'orange', shape: 'continuous' },
+  { id: 'cello', name: 'Violoncelle', color: 'orange', shape: 'continuous' },
+  { id: 'contrabass', name: 'Contrebasse', color: 'orange', shape: 'angular' },
   
   // Cordes pincées (Jaune)
-  { id: 'orchestral_harp', name: 'Harpe', color: 'yellow' },
-  { id: 'acoustic_guitar_nylon', name: 'Guitare Classique', color: 'yellow' },
-  { id: 'banjo', name: 'Banjo', color: 'yellow' },
+  { id: 'orchestral_harp', name: 'Harpe', color: 'yellow', shape: 'angular' },
+  { id: 'acoustic_guitar_nylon', name: 'Guitare Classique', color: 'yellow', shape: 'angular' },
+  { id: 'banjo', name: 'Banjo', color: 'yellow', shape: 'angular' },
   
   // Bois (Vert)
-  { id: 'flute', name: 'Flûte', color: 'green' },
-  { id: 'clarinet', name: 'Clarinette', color: 'green' },
-  { id: 'oboe', name: 'Hautbois', color: 'green' },
-  { id: 'bassoon', name: 'Basson', color: 'green' },
+  { id: 'flute', name: 'Flûte', color: 'green', shape: 'continuous' },
+  { id: 'clarinet', name: 'Clarinette', color: 'green', shape: 'continuous' },
+  { id: 'oboe', name: 'Hautbois', color: 'green', shape: 'continuous' },
+  { id: 'bassoon', name: 'Basson', color: 'green', shape: 'angular' },
   
   // Percussions (Bleu)
-  { id: 'marimba', name: 'Marimba', color: 'blue' },
-  { id: 'timpani', name: 'Timbales', color: 'blue' },
-  { id: 'tubular_bells', name: 'Cloches Tubulaires', color: 'blue' },
+  { id: 'marimba', name: 'Marimba', color: 'blue', shape: 'angular' },
+  { id: 'timpani', name: 'Timbales', color: 'blue', shape: 'angular' },
+  { id: 'tubular_bells', name: 'Cloches Tubulaires', color: 'blue', shape: 'angular' },
   
   // Synthés / Chœurs (Violet)
-  { id: 'choir_aahs', name: 'Chœurs', color: 'purple' },
-  { id: 'pad_1_new_age', name: 'Pad Atmosphérique', color: 'purple' },
-  { id: 'lead_1_square', name: 'Synthé Lead', color: 'purple' },
+  { id: 'choir_aahs', name: 'Chœurs', color: 'purple', shape: 'continuous' },
+  { id: 'pad_1_new_age', name: 'Pad Atmosphérique', color: 'purple', shape: 'continuous' },
+  { id: 'lead_1_square', name: 'Synthé Lead', color: 'purple', shape: 'continuous' },
   
   // Défaut
-  { id: 'acoustic_grand_piano', name: 'Piano à Queue', color: 'none' },
-  { id: 'harpsichord', name: 'Clavecin', color: 'none' }
+  { id: 'acoustic_grand_piano', name: 'Piano à Queue', color: 'none', shape: 'angular' },
+  { id: 'harpsichord', name: 'Clavecin', color: 'none', shape: 'angular' }
 ];
 
 export function getDefaultInstrument(colorFamily: string, shapeType: string): string {
-  if (colorFamily === 'none' || shapeType === 'none') {
+  if (colorFamily === 'none' && shapeType === 'none') {
     const randomIdx = Math.floor(Math.random() * (instrumentOptions.length - 1));
     return instrumentOptions[randomIdx].id;
   }
-  const matches = instrumentOptions.filter(i => i.color === colorFamily);
+
+  let matches = instrumentOptions;
+
+  if (colorFamily !== 'none') {
+    matches = matches.filter(i => i.color === colorFamily);
+  }
+
+  if (shapeType !== 'none') {
+    const shapeMatches = matches.filter(i => i.shape === shapeType);
+    if (shapeMatches.length > 0) {
+      matches = shapeMatches;
+    }
+  }
+
   if (matches.length > 0) {
     const randomMatch = matches[Math.floor(Math.random() * matches.length)];
     return randomMatch.id;
   }
-  return 'acoustic_grand_piano';
+
+  return shapeType === 'continuous' ? 'pad_1_new_age' : 'acoustic_grand_piano';
 }
 
 export function mapYToNote(y: number, baseOctave: number = 4): string {
@@ -117,7 +131,7 @@ export function generateMusicData(contours: {x: number, y: number}[], shapeType:
   const melody = timeUniqueMelody;
 
   // Generate a simple, non-intrusive chord accompaniment
-  // Plays a soft chord on the first beat of every measure (not arpeggiated "un a un")
+  // If legato, plays a soft long chord. If angular, plays shorter staccato chords.
   const accompaniment: any[] = [];
   const numMeasures = Math.ceil(targetDuration / (beatDuration * 4));
   
@@ -129,8 +143,6 @@ export function generateMusicData(contours: {x: number, y: number}[], shapeType:
     const notesInMeasure = melody.filter(n => n.time >= measureTime && n.time < measureTime + beatDuration * 4);
     let avgY = 0.5;
     if (notesInMeasure.length > 0) {
-      // We don't have the original Y here easily, but we can just use a drone or a simple progression
-      // Let's just use a simple I - IV - V progression based on the measure number
       const prog = [0.8, 0.6, 0.5, 0.6]; // Root, IV, V, IV roughly
       avgY = prog[m % prog.length];
     }
@@ -139,10 +151,28 @@ export function generateMusicData(contours: {x: number, y: number}[], shapeType:
     const thirdNote = mapYToNote(avgY - 0.15, baseOctave - 1);
     const fifthNote = mapYToNote(avgY - 0.3, baseOctave - 1);
 
-    // Play all notes of the chord AT THE SAME TIME (not "un a un")
-    accompaniment.push({ time: measureTime, note: rootNote, duration: beatDuration * 4, volume: 0.25 });
-    accompaniment.push({ time: measureTime, note: thirdNote, duration: beatDuration * 4, volume: 0.2 });
-    accompaniment.push({ time: measureTime, note: fifthNote, duration: beatDuration * 4, volume: 0.2 });
+    if (isLegato) {
+      // Long, soft chords for continuous lines
+      accompaniment.push({ time: measureTime, note: rootNote, duration: beatDuration * 4, volume: 0.25 });
+      accompaniment.push({ time: measureTime, note: thirdNote, duration: beatDuration * 4, volume: 0.2 });
+      accompaniment.push({ time: measureTime, note: fifthNote, duration: beatDuration * 4, volume: 0.2 });
+    } else {
+      // Shorter, rhythmic chords for angular lines (e.g., on beats 1 and 3)
+      const staccatoDuration = beatDuration * 0.5;
+      const vol = 0.35; // slightly louder for staccato
+      
+      // Beat 1
+      accompaniment.push({ time: measureTime, note: rootNote, duration: staccatoDuration, volume: vol });
+      accompaniment.push({ time: measureTime, note: thirdNote, duration: staccatoDuration, volume: vol });
+      accompaniment.push({ time: measureTime, note: fifthNote, duration: staccatoDuration, volume: vol });
+      
+      // Beat 3
+      if (measureTime + beatDuration * 2 < targetDuration) {
+        accompaniment.push({ time: measureTime + beatDuration * 2, note: rootNote, duration: staccatoDuration, volume: vol });
+        accompaniment.push({ time: measureTime + beatDuration * 2, note: thirdNote, duration: staccatoDuration, volume: vol });
+        accompaniment.push({ time: measureTime + beatDuration * 2, note: fifthNote, duration: staccatoDuration, volume: vol });
+      }
+    }
   }
 
   return { 
@@ -171,17 +201,19 @@ export class MusicPlayer {
   onEnded?: () => void;
   reqId: number = 0;
   instrumentId: string = '';
+  accompInstrumentId: string = '';
 
   constructor() {
     const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
     this.ac = new AudioContext();
   }
 
-  async load(instrumentId: string) {
-    if (this.player && this.instrumentId === instrumentId) return; // Already loaded
+  async load(instrumentId: string, accompInstrumentId: string = 'pad_1_new_age') {
+    if (this.player && this.instrumentId === instrumentId && this.accompPlayer && this.accompInstrumentId === accompInstrumentId) return; // Already loaded
     this.instrumentId = instrumentId;
+    this.accompInstrumentId = accompInstrumentId;
     this.player = await Soundfont.instrument(this.ac, instrumentId as any, { soundfont: 'MusyngKite' });
-    this.accompPlayer = await Soundfont.instrument(this.ac, 'pad_1_new_age', { soundfont: 'MusyngKite' });
+    this.accompPlayer = await Soundfont.instrument(this.ac, accompInstrumentId as any, { soundfont: 'MusyngKite' });
   }
 
   play(timeline: any, offset: number = 0) {
@@ -328,7 +360,7 @@ function audioBufferToWav(buffer: AudioBuffer) {
   return new Blob([bufferArray], { type: "audio/wav" });
 }
 
-export async function exportAudio(timeline: any, instrumentId: string) {
+export async function exportAudio(timeline: any, instrumentId: string, accompInstrumentId: string = 'pad_1_new_age') {
   const totalDuration = timeline.totalDuration || 60;
   const sampleRate = 44100;
   // Create an offline audio context to render the audio as fast as possible
@@ -336,7 +368,7 @@ export async function exportAudio(timeline: any, instrumentId: string) {
 
   try {
     const player = await Soundfont.instrument(offlineCtx as any, instrumentId as any, { soundfont: 'MusyngKite' });
-    const accompPlayer = await Soundfont.instrument(offlineCtx as any, 'pad_1_new_age', { soundfont: 'MusyngKite' });
+    const accompPlayer = await Soundfont.instrument(offlineCtx as any, accompInstrumentId as any, { soundfont: 'MusyngKite' });
 
     if (timeline.melody && Array.isArray(timeline.melody)) {
       timeline.melody.forEach((note: any) => {

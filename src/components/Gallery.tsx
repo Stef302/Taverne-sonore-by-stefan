@@ -103,12 +103,13 @@ export default function Gallery({ cylinders }: GalleryProps) {
     setIsExporting(true);
     try {
       const instrument = selectedInstruments[expandedCylinder.id] || expandedCylinder.instrument || 'acoustic_grand_piano';
+      const accompInstrument = expandedCylinder.accompInstrument || 'pad_1_new_age';
       const octave = baseOctaves[expandedCylinder.id] || 4;
       let timeline = expandedCylinder.result;
       if (expandedCylinder.result.contours) {
         timeline = generateMusicData(expandedCylinder.result.contours, expandedCylinder.result.shapeType, octave);
       }
-      await exportAudio(timeline, instrument);
+      await exportAudio(timeline, instrument, accompInstrument);
     } catch (err) {
       console.error("Erreur lors de l'exportation:", err);
     } finally {
@@ -122,6 +123,7 @@ export default function Gallery({ cylinders }: GalleryProps) {
     if (playbackState === 'idle') {
       setIsLoading(true);
       const instrument = selectedInstruments[expandedCylinder.id] || expandedCylinder.instrument || 'acoustic_grand_piano';
+      const accompInstrument = expandedCylinder.accompInstrument || 'pad_1_new_age';
       const octave = baseOctaves[expandedCylinder.id] || 4;
       
       let timeline = expandedCylinder.result;
@@ -129,7 +131,7 @@ export default function Gallery({ cylinders }: GalleryProps) {
         timeline = generateMusicData(expandedCylinder.result.contours, expandedCylinder.result.shapeType, octave);
       }
       
-      await playerRef.current.load(instrument);
+      await playerRef.current.load(instrument, accompInstrument);
       
       playerRef.current.onProgress = (time) => {
         const total = timeline.totalDuration || 60;

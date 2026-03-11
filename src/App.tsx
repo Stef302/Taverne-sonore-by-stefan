@@ -15,6 +15,7 @@ export interface Cylinder {
   title: string;
   date: string;
   instrument: string;
+  accompInstrument?: string;
   image: string;
   result: any;
 }

@@ -22,6 +22,7 @@ export default function Scanner({ onSave }: ScannerProps) {
   // Modifiable parameters
   const [showSettings, setShowSettings] = useState(false);
   const [selectedInstrument, setSelectedInstrument] = useState<string>('acoustic_grand_piano');
+  const [accompInstrument, setAccompInstrument] = useState<string>('pad_1_new_age');
   const [baseOctave, setBaseOctave] = useState<number>(4);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -164,7 +165,7 @@ Retourne UNIQUEMENT un JSON avec :
 1. summary: 2 phrases poétiques sur l'interprétation.
 2. title: Un titre poétique.
 3. shapeType: "continuous" (traits liés/courbes), "angular" (traits droits/hachés), ou "none" (si vide).
-4. colorFamily: "red", "orange", "yellow", "green", "blue", "purple", ou "none" (selon la couleur dominante).`;
+4. colorFamilies: Un tableau des couleurs trouvées, parmi "red", "orange", "yellow", "green", "blue", "purple", ou "none". S'il y a plusieurs couleurs distinctes sur le dessin, liste-les toutes par ordre d'importance (ex: ["blue", "red"]).`;
 
       const response = await ai.models.generateContent({
         model: 'gemini-3.1-flash-lite-preview',
@@ -180,9 +181,12 @@ Retourne UNIQUEMENT un JSON avec :
               summary: { type: Type.STRING },
               title: { type: Type.STRING },
               shapeType: { type: Type.STRING },
-              colorFamily: { type: Type.STRING }
+              colorFamilies: { 
+                type: Type.ARRAY,
+                items: { type: Type.STRING }
+              }
             },
-            required: ["summary", "title", "shapeType", "colorFamily"]
+            required: ["summary", "title", "shapeType", "colorFamilies"]
           }
         }
       });
@@ -190,12 +194,21 @@ Retourne UNIQUEMENT un JSON avec :
       if (response.text) {
         const metadata = JSON.parse(response.text);
         
-        const defaultInstr = getDefaultInstrument(metadata.colorFamily, metadata.shapeType);
+        const colors = metadata.colorFamilies && metadata.colorFamilies.length > 0 ? metadata.colorFamilies : ['none'];
+        const defaultInstr = getDefaultInstrument(colors[0], metadata.shapeType);
+        
+        // If there's a second color, use it for accompaniment, otherwise base it on shape
+        const accompInstr = colors.length > 1 && colors[1] !== 'none'
+          ? getDefaultInstrument(colors[1], metadata.shapeType)
+          : (metadata.shapeType === 'continuous' ? 'pad_1_new_age' : 'acoustic_grand_piano');
+
         setSelectedInstrument(defaultInstr);
+        setAccompInstrument(accompInstr);
         setBaseOctave(4);
 
         const fullResult = {
           ...metadata,
+          colorFamily: colors[0], // Keep for backward compatibility
           contours: path
         };
 
@@ -206,6 +219,7 @@ Retourne UNIQUEMENT un JSON avec :
           title: metadata.title || "Œuvre Inconnue",
           date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }),
           instrument: defaultInstr,
+          accompInstrument: accompInstr,
           image: imageDataToScan,
           result: fullResult
         });
@@ -226,7 +240,7 @@ Retourne UNIQUEMENT un JSON avec :
     
     const timeline = generateMusicData(result.contours, result.shapeType, baseOctave);
     
-    await playerRef.current.load(selectedInstrument);
+    await playerRef.current.load(selectedInstrument, accompInstrument);
     playerRef.current.onEnded = () => {
       setIsPlaying(false);
     };
