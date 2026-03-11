@@ -133,7 +133,8 @@ export default function Scanner({ onSave }: ScannerProps) {
         
         const sampled = [];
         if (points.length > 0) {
-          const step = Math.max(1, Math.floor(points.length / 30));
+          // Sample more points for a richer melody (e.g., up to 150 points)
+          const step = Math.max(1, Math.floor(points.length / 150));
           for (let i = 0; i < points.length; i += step) {
             sampled.push(points[i]);
           }

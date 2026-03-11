@@ -63,26 +63,29 @@ export function mapYToNote(y: number, baseOctave: number = 4): string {
 }
 
 export function generateMusicData(contours: {x: number, y: number}[], shapeType: string, baseOctave: number = 4) {
-  const targetDuration = 60; // Force 60 seconds for a full card
-  const melody: any[] = [];
-  const accompaniment: any[] = [];
-
   if (!contours || contours.length === 0 || shapeType === 'none') {
-    return { melody, accompaniment, totalDuration: 0, info: {} };
+    return { melody: [], accompaniment: [], totalDuration: 0, info: {} };
   }
 
   const isLegato = shapeType === 'continuous';
   const minX = Math.min(...contours.map(c => c.x));
   const maxX = Math.max(...contours.map(c => c.x));
   const spanX = maxX - minX || 1;
+  
+  // Assume the card takes up about 80% of the image width.
+  // So a spanX of 0.8 corresponds to a full 60 seconds.
+  // Cap at 60 seconds.
+  const targetDuration = Math.min(60, (spanX / 0.8) * 60); 
 
   // Quantize to a grid (e.g., 120 BPM = 0.5s per beat)
   const bpm = isLegato ? 90 : 120;
   const beatDuration = 60 / bpm;
 
+  const rawMelody: any[] = [];
+
   // Generate Melody
   contours.forEach((p) => {
-    // Normalize X to 0-1, then scale to targetDuration
+    // Normalize X to 0-1 relative to the line itself, then scale to targetDuration
     const normalizedX = (p.x - minX) / spanX;
     let rawTime = normalizedX * targetDuration;
 
@@ -90,60 +93,66 @@ export function generateMusicData(contours: {x: number, y: number}[], shapeType:
     const step = beatDuration / 4;
     const time = Math.round(rawTime / step) * step;
 
-    melody.push({
+    rawMelody.push({
       time: time,
       note: mapYToNote(p.y, baseOctave),
-      duration: isLegato ? beatDuration * 2 : beatDuration / 2,
+      duration: isLegato ? beatDuration : beatDuration / 2,
       volume: 0.8
     });
   });
 
-  // Remove duplicate notes at the exact same time
-  const uniqueMelody = [];
+  // Remove duplicate notes at the exact same time, keeping the first one
+  const timeUniqueMelody: any[] = [];
   const seenTimes = new Set();
-  for (const note of melody) {
+  for (const note of rawMelody) {
     if (!seenTimes.has(note.time)) {
       seenTimes.add(note.time);
-      uniqueMelody.push(note);
+      timeUniqueMelody.push(note);
     }
   }
 
-  // Generate Accompaniment (Arpeggios or rhythmic chords)
+  // Sort by time just in case
+  timeUniqueMelody.sort((a, b) => a.time - b.time);
+
+  const melody = timeUniqueMelody;
+
+  // Generate a simple, non-intrusive chord accompaniment
+  // Plays a soft chord on the first beat of every measure (not arpeggiated "un a un")
+  const accompaniment: any[] = [];
   const numMeasures = Math.ceil(targetDuration / (beatDuration * 4));
+  
   for (let m = 0; m < numMeasures; m++) {
     const measureTime = m * beatDuration * 4;
     if (measureTime >= targetDuration) break;
 
-    const rootNote = mapYToNote(0.8, baseOctave - 1);
-    const thirdNote = mapYToNote(0.65, baseOctave - 1);
-    const fifthNote = mapYToNote(0.5, baseOctave - 1);
-
-    if (isLegato) {
-      // Arpeggio
-      accompaniment.push({ time: measureTime, note: rootNote, duration: beatDuration * 2, volume: 0.4 });
-      accompaniment.push({ time: measureTime + beatDuration, note: fifthNote, duration: beatDuration * 2, volume: 0.3 });
-      accompaniment.push({ time: measureTime + beatDuration * 2, note: thirdNote, duration: beatDuration * 2, volume: 0.3 });
-      accompaniment.push({ time: measureTime + beatDuration * 3, note: fifthNote, duration: beatDuration * 2, volume: 0.3 });
-    } else {
-      // Staccato chords on beats 1 and 3
-      accompaniment.push({ time: measureTime, note: rootNote, duration: beatDuration / 2, volume: 0.4 });
-      accompaniment.push({ time: measureTime, note: fifthNote, duration: beatDuration / 2, volume: 0.3 });
-
-      if (measureTime + beatDuration * 2 < targetDuration) {
-        accompaniment.push({ time: measureTime + beatDuration * 2, note: rootNote, duration: beatDuration / 2, volume: 0.4 });
-        accompaniment.push({ time: measureTime + beatDuration * 2, note: thirdNote, duration: beatDuration / 2, volume: 0.3 });
-      }
+    // Find the average Y of the melody in this measure to determine the chord
+    const notesInMeasure = melody.filter(n => n.time >= measureTime && n.time < measureTime + beatDuration * 4);
+    let avgY = 0.5;
+    if (notesInMeasure.length > 0) {
+      // We don't have the original Y here easily, but we can just use a drone or a simple progression
+      // Let's just use a simple I - IV - V progression based on the measure number
+      const prog = [0.8, 0.6, 0.5, 0.6]; // Root, IV, V, IV roughly
+      avgY = prog[m % prog.length];
     }
+
+    const rootNote = mapYToNote(avgY, baseOctave - 1);
+    const thirdNote = mapYToNote(avgY - 0.15, baseOctave - 1);
+    const fifthNote = mapYToNote(avgY - 0.3, baseOctave - 1);
+
+    // Play all notes of the chord AT THE SAME TIME (not "un a un")
+    accompaniment.push({ time: measureTime, note: rootNote, duration: beatDuration * 4, volume: 0.25 });
+    accompaniment.push({ time: measureTime, note: thirdNote, duration: beatDuration * 4, volume: 0.2 });
+    accompaniment.push({ time: measureTime, note: fifthNote, duration: beatDuration * 4, volume: 0.2 });
   }
 
   return { 
-    melody: uniqueMelody, 
+    melody, 
     accompaniment, 
     totalDuration: targetDuration,
     info: {
       tempo: bpm,
       scale: "Pentatonique Majeure",
-      noteCount: uniqueMelody.length + accompaniment.length
+      noteCount: melody.length + accompaniment.length
     }
   };
 }
@@ -172,7 +181,7 @@ export class MusicPlayer {
     if (this.player && this.instrumentId === instrumentId) return; // Already loaded
     this.instrumentId = instrumentId;
     this.player = await Soundfont.instrument(this.ac, instrumentId as any, { soundfont: 'MusyngKite' });
-    this.accompPlayer = await Soundfont.instrument(this.ac, 'acoustic_grand_piano', { soundfont: 'MusyngKite' });
+    this.accompPlayer = await Soundfont.instrument(this.ac, 'pad_1_new_age', { soundfont: 'MusyngKite' });
   }
 
   play(timeline: any, offset: number = 0) {
@@ -327,7 +336,7 @@ export async function exportAudio(timeline: any, instrumentId: string) {
 
   try {
     const player = await Soundfont.instrument(offlineCtx as any, instrumentId as any, { soundfont: 'MusyngKite' });
-    const accompPlayer = await Soundfont.instrument(offlineCtx as any, 'acoustic_grand_piano', { soundfont: 'MusyngKite' });
+    const accompPlayer = await Soundfont.instrument(offlineCtx as any, 'pad_1_new_age', { soundfont: 'MusyngKite' });
 
     if (timeline.melody && Array.isArray(timeline.melody)) {
       timeline.melody.forEach((note: any) => {
