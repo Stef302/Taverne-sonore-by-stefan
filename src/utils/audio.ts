@@ -86,10 +86,9 @@ export function generateMusicData(contours: {x: number, y: number}[], shapeType:
   const maxX = Math.max(...contours.map(c => c.x));
   const spanX = maxX - minX || 1;
   
-  // Assume the card takes up about 80% of the image width.
-  // So a spanX of 0.8 corresponds to a full 60 seconds.
-  // Cap at 60 seconds.
-  const targetDuration = Math.min(60, (spanX / 0.8) * 60); 
+  // A full width line (spanX = 1) corresponds to 60 seconds.
+  // A line from the middle to the end (spanX = 0.5) corresponds to 30 seconds.
+  const targetDuration = spanX * 60; 
 
   // Quantize to a grid (e.g., 120 BPM = 0.5s per beat)
   const bpm = isLegato ? 90 : 120;
