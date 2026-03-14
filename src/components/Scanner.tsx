@@ -14,10 +14,11 @@ interface ScannerProps {
 export default function Scanner({ onSave }: ScannerProps) {
   const [image, setImage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
-  const [scanProgress, setScanProgress] = useState(0);
   const [result, setResult] = useState<any | null>(null);
   const [cameraError, setCameraError] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isAudioLoading, setIsAudioLoading] = useState(false);
+  const [audioLoadProgress, setAudioLoadProgress] = useState(0);
   const [contourPath, setContourPath] = useState<{x: number, y: number}[]>([]);
   
   // Modifiable parameters
@@ -151,17 +152,8 @@ export default function Scanner({ onSave }: ScannerProps) {
   const handleScan = async (imageDataToScan: string) => {
     if (!imageDataToScan) return;
     setIsScanning(true);
-    setScanProgress(0);
     setResult(null);
     setShowSettings(false);
-
-    const progressInterval = setInterval(() => {
-      setScanProgress(prev => {
-        if (prev >= 95) return prev;
-        const increment = Math.random() * 12;
-        return Math.min(95, prev + increment);
-      });
-    }, 400);
 
     const path = await extractContours(imageDataToScan);
     setContourPath(path);
@@ -238,11 +230,7 @@ Retourne UNIQUEMENT un JSON avec :
       console.error("Scanning failed:", error);
       setResult({ summary: "L'automate a rencontré une erreur lors de la lecture du cylindre." });
     } finally {
-      clearInterval(progressInterval);
-      setScanProgress(100);
-      setTimeout(() => {
-        setIsScanning(false);
-      }, 500);
+      setIsScanning(false);
     }
   };
 
@@ -250,15 +238,35 @@ Retourne UNIQUEMENT un JSON avec :
     if (!result || !result.contours || !playerRef.current) return;
     
     playerRef.current.stop();
-    setIsPlaying(true);
+    setIsAudioLoading(true);
+    setAudioLoadProgress(0);
+    
+    const progressInterval = setInterval(() => {
+      setAudioLoadProgress(prev => {
+        if (prev >= 95) return prev;
+        return Math.min(95, prev + Math.random() * 15);
+      });
+    }, 300);
     
     const timeline = generateMusicData(result.contours, result.shapeType, baseOctave);
     
-    await playerRef.current.load(selectedInstrument, accompInstrument);
-    playerRef.current.onEnded = () => {
-      setIsPlaying(false);
-    };
-    playerRef.current.play(timeline);
+    try {
+      await playerRef.current.load(selectedInstrument, accompInstrument);
+    } catch (e) {
+      console.error("Erreur de chargement audio", e);
+    } finally {
+      clearInterval(progressInterval);
+      setAudioLoadProgress(100);
+      
+      setTimeout(() => {
+        setIsAudioLoading(false);
+        setIsPlaying(true);
+        playerRef.current!.onEnded = () => {
+          setIsPlaying(false);
+        };
+        playerRef.current!.play(timeline);
+      }, 300);
+    }
   };
 
   return (
@@ -344,19 +352,9 @@ Retourne UNIQUEMENT un JSON avec :
       </div>
 
       {isScanning && (
-        <div className="mt-6 sm:mt-8 flex flex-col items-center w-full max-w-md px-4">
-          <div className="flex items-center space-x-3 text-brass-400 mb-2">
-            <Loader2 className="animate-spin" />
-            <p className="uppercase tracking-widest text-xs sm:text-sm font-medium">
-              Analyse et composition... {Math.round(scanProgress)}%
-            </p>
-          </div>
-          <div className="w-full h-1.5 bg-ink/20 rounded-full overflow-hidden border border-brass-900/30">
-            <div 
-              className="h-full bg-brass-400 transition-all duration-300 ease-out shadow-[0_0_10px_#d4af37]"
-              style={{ width: `${scanProgress}%` }}
-            />
-          </div>
+        <div className="mt-6 sm:mt-8 flex items-center space-x-3 text-brass-400">
+          <Loader2 className="animate-spin" />
+          <p className="uppercase tracking-widest text-xs sm:text-sm font-medium">Analyse des contours en cours...</p>
         </div>
       )}
 
@@ -371,14 +369,25 @@ Retourne UNIQUEMENT un JSON avec :
               <h3 className="text-xl sm:text-2xl font-serif font-bold text-ink">{result.title || "Interprétation"}</h3>
             </div>
             {result.contours && (
-              <button 
-                onClick={handlePlay}
-                disabled={isPlaying || result.contours.length === 0}
-                className={`flex items-center justify-center gap-2 px-6 py-2 rounded-full font-medium text-sm transition-all shadow-md ${isPlaying || result.contours.length === 0 ? 'bg-brass-600 text-white/50 cursor-not-allowed' : 'bg-brass-500 text-white hover:bg-brass-400 hover:scale-105'}`}
-              >
-                {isPlaying ? <Loader2 className="animate-spin" size={16} /> : <Music size={16} />}
-                {isPlaying ? "Lecture..." : "Écouter l'œuvre"}
-              </button>
+              <div className="flex flex-col items-end gap-2">
+                <button 
+                  onClick={handlePlay}
+                  disabled={isPlaying || isAudioLoading || result.contours.length === 0}
+                  className={`flex items-center justify-center gap-2 px-6 py-2 rounded-full font-medium text-sm transition-all shadow-md ${isPlaying || isAudioLoading || result.contours.length === 0 ? 'bg-brass-600 text-white/50 cursor-not-allowed' : 'bg-brass-500 text-white hover:bg-brass-400 hover:scale-105'}`}
+                >
+                  {isAudioLoading ? <Loader2 className="animate-spin" size={16} /> : (isPlaying ? <Music size={16} className="animate-pulse" /> : <Play size={16} />)}
+                  {isAudioLoading ? `Chargement... ${Math.round(audioLoadProgress)}%` : (isPlaying ? "Lecture en cours..." : "Écouter l'œuvre")}
+                </button>
+                
+                {isAudioLoading && (
+                  <div className="w-full h-1 bg-ink/10 rounded-full overflow-hidden mt-1">
+                    <div 
+                      className="h-full bg-brass-400 transition-all duration-300 ease-out"
+                      style={{ width: `${audioLoadProgress}%` }}
+                    />
+                  </div>
+                )}
+              </div>
             )}
           </div>
           

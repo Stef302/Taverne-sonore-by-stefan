@@ -30,7 +30,9 @@ export const instrumentOptions = [
   { id: 'tubular_bells', name: 'Cloches Tubulaires', color: 'blue', shape: 'angular' },
   
   // Synthés / Chœurs (Violet)
-  { id: 'choir_aahs', name: 'Chœurs', color: 'purple', shape: 'continuous' },
+  { id: 'choir_aahs', name: 'Chœurs (Aah)', color: 'purple', shape: 'continuous' },
+  { id: 'voice_oohs', name: 'Voix (Ooh)', color: 'purple', shape: 'continuous' },
+  { id: 'synth_voice', name: 'Voix Synthétique', color: 'purple', shape: 'continuous' },
   { id: 'pad_1_new_age', name: 'Pad Atmosphérique', color: 'purple', shape: 'continuous' },
   { id: 'lead_1_square', name: 'Synthé Lead', color: 'purple', shape: 'continuous' },
   
