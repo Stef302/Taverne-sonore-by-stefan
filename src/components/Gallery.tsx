@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Play, Pause, Square, X, Music, Settings2, ChevronDown, ChevronUp, Library as LibraryIcon, Download, Loader2 } from 'lucide-react';
+import { Play, Pause, Square, X, Music, Settings2, ChevronDown, ChevronUp, Library as LibraryIcon, Download, Loader2, Trash2 } from 'lucide-react';
 import { Cylinder } from '../App';
 import { MusicPlayer, generateMusicData, instrumentOptions, exportAudio } from '../utils/audio';
 
 interface GalleryProps {
   cylinders: Cylinder[];
+  onDelete: (id: string) => void;
 }
 
 function CylinderCard({ cylinder, onClick }: { cylinder: Cylinder, onClick: () => void }) {
@@ -62,13 +63,14 @@ function CylinderCard({ cylinder, onClick }: { cylinder: Cylinder, onClick: () =
   );
 }
 
-export default function Gallery({ cylinders }: GalleryProps) {
+export default function Gallery({ cylinders, onDelete }: GalleryProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [playbackState, setPlaybackState] = useState<'idle' | 'playing' | 'paused'>('idle');
   const [progress, setProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   const playerRef = useRef<MusicPlayer | null>(null);
 
@@ -96,6 +98,7 @@ export default function Gallery({ cylinders }: GalleryProps) {
     setProgress(0);
     setExpandedId(null);
     setShowSettings(false);
+    setShowDeleteConfirm(false);
   };
 
   const handleExport = async () => {
@@ -252,9 +255,39 @@ export default function Gallery({ cylinders }: GalleryProps) {
               {/* Header */}
               <div className="sticky top-0 z-20 flex justify-between items-center p-4 border-b border-ink/10 bg-parchment-200/90 backdrop-blur-md">
                 <h3 className="font-bold text-ink font-serif text-lg truncate pr-4">{expandedCylinder.title}</h3>
-                <button onClick={handleClose} className="p-2 text-ink/60 hover:text-ink hover:bg-ink/10 rounded-full transition-colors">
-                  <X size={20} />
-                </button>
+                <div className="flex items-center gap-2">
+                  {showDeleteConfirm ? (
+                    <div className="flex items-center gap-2 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">
+                      <span className="text-xs font-bold text-red-600 uppercase">Sûr ?</span>
+                      <button 
+                        onClick={() => {
+                          onDelete(expandedCylinder.id);
+                          handleClose();
+                        }}
+                        className="text-xs font-bold text-white bg-red-500 hover:bg-red-600 px-2 py-1 rounded transition-colors"
+                      >
+                        Oui
+                      </button>
+                      <button 
+                        onClick={() => setShowDeleteConfirm(false)}
+                        className="text-xs font-bold text-ink/60 hover:text-ink px-2 py-1 rounded transition-colors"
+                      >
+                        Non
+                      </button>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => setShowDeleteConfirm(true)} 
+                      className="p-2 text-red-500/70 hover:text-red-600 hover:bg-red-500/10 rounded-full transition-colors"
+                      title="Supprimer"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  )}
+                  <button onClick={handleClose} className="p-2 text-ink/60 hover:text-ink hover:bg-ink/10 rounded-full transition-colors">
+                    <X size={20} />
+                  </button>
+                </div>
               </div>
 
               <div className="p-6 flex flex-col gap-6">

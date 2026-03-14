@@ -28,6 +28,10 @@ export default function App() {
     setCylinders(prev => [cylinder, ...prev]);
   };
 
+  const handleDeleteCylinder = (id: string) => {
+    setCylinders(prev => prev.filter(c => c.id !== id));
+  };
+
   return (
     <div className="h-screen flex flex-col bg-mahogany-900 text-parchment-200 overflow-hidden">
       {/* Header */}
@@ -40,7 +44,7 @@ export default function App() {
       {/* Main Content Area - Scrollable */}
       <main className="flex-1 overflow-y-auto w-full max-w-3xl mx-auto p-4 pb-28">
         {activeTab === 'scanner' && <Scanner onSave={handleSaveCylinder} />}
-        {activeTab === 'gallery' && <Gallery cylinders={cylinders} />}
+        {activeTab === 'gallery' && <Gallery cylinders={cylinders} onDelete={handleDeleteCylinder} />}
         {activeTab === 'manual' && <Manual />}
         {activeTab === 'info' && <SettingsPanel />}
       </main>

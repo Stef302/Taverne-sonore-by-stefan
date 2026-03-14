@@ -1,43 +1,6 @@
-import React, { Suspense, Component, ErrorInfo, ReactNode } from 'react';
+import React from 'react';
 import { Info, User, Lightbulb, Box } from 'lucide-react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Stage } from '@react-three/drei';
-
-class ModelErrorBoundary extends Component<{children: ReactNode}, {hasError: boolean}> {
-  constructor(props: {children: ReactNode}) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(_: Error) {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Erreur de chargement du modèle 3D:", error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <FallbackBox />;
-    }
-    return this.props.children;
-  }
-}
-
-function MachineModel() {
-  const { scene } = useGLTF('/machine.glb');
-  return <primitive object={scene} />;
-}
-
-function FallbackBox() {
-  return (
-    <mesh>
-      <cylinderGeometry args={[1, 1, 2, 32]} />
-      <meshStandardMaterial color="#d4af37" metalness={0.8} roughness={0.2} />
-    </mesh>
-  );
-}
+import ModelViewer from './ModelViewer';
 
 export default function SettingsPanel() {
   return (
@@ -58,21 +21,7 @@ export default function SettingsPanel() {
             Explorez le modèle 3D de "La Taverne de Stefan Sachelaru".
           </p>
           
-          <div className="w-full h-64 bg-black/5 rounded-md border border-ink/10 overflow-hidden relative">
-            <Canvas shadows dpr={[1, 2]} camera={{ fov: 50 }}>
-              <ModelErrorBoundary>
-                <Suspense fallback={<FallbackBox />}>
-                  <Stage environment="city" intensity={0.6}>
-                    <MachineModel />
-                  </Stage>
-                </Suspense>
-              </ModelErrorBoundary>
-              <OrbitControls autoRotate autoRotateSpeed={1} makeDefault />
-            </Canvas>
-            <div className="absolute bottom-2 right-2 text-[10px] font-mono text-ink/40 uppercase pointer-events-none">
-              Glissez pour pivoter
-            </div>
-          </div>
+          <ModelViewer />
         </div>
 
         {/* Credits Section */}
