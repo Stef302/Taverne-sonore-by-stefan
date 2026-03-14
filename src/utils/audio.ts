@@ -7,34 +7,50 @@ export const instrumentOptions = [
   { id: 'french_horn', name: 'Cor d\'Harmonie', color: 'red', shape: 'continuous' },
   { id: 'trombone', name: 'Trombone', color: 'red', shape: 'continuous' },
   { id: 'tuba', name: 'Tuba', color: 'red', shape: 'angular' },
+  { id: 'brass_section', name: 'Section Cuivres', color: 'red', shape: 'angular' },
+  { id: 'muted_trumpet', name: 'Trompette Bouchée', color: 'red', shape: 'continuous' },
   
   // Cordes frottées (Orange)
   { id: 'violin', name: 'Violon', color: 'orange', shape: 'continuous' },
   { id: 'cello', name: 'Violoncelle', color: 'orange', shape: 'continuous' },
   { id: 'contrabass', name: 'Contrebasse', color: 'orange', shape: 'angular' },
+  { id: 'viola', name: 'Alto', color: 'orange', shape: 'continuous' },
+  { id: 'string_ensemble_1', name: 'Ensemble à Cordes', color: 'orange', shape: 'continuous' },
+  { id: 'tremolo_strings', name: 'Cordes Tremolo', color: 'orange', shape: 'continuous' },
   
   // Cordes pincées (Jaune)
   { id: 'orchestral_harp', name: 'Harpe', color: 'yellow', shape: 'angular' },
   { id: 'acoustic_guitar_nylon', name: 'Guitare Classique', color: 'yellow', shape: 'angular' },
+  { id: 'acoustic_guitar_steel', name: 'Guitare Folk', color: 'yellow', shape: 'angular' },
   { id: 'banjo', name: 'Banjo', color: 'yellow', shape: 'angular' },
+  { id: 'koto', name: 'Koto Japonais', color: 'yellow', shape: 'angular' },
+  { id: 'pizzicato_strings', name: 'Cordes Pizzicato', color: 'yellow', shape: 'angular' },
   
   // Bois (Vert)
-  { id: 'flute', name: 'Flûte', color: 'green', shape: 'continuous' },
+  { id: 'flute', name: 'Flûte Traversière', color: 'green', shape: 'continuous' },
   { id: 'clarinet', name: 'Clarinette', color: 'green', shape: 'continuous' },
   { id: 'oboe', name: 'Hautbois', color: 'green', shape: 'continuous' },
   { id: 'bassoon', name: 'Basson', color: 'green', shape: 'angular' },
+  { id: 'pan_flute', name: 'Flûte de Pan', color: 'green', shape: 'continuous' },
+  { id: 'shakuhachi', name: 'Shakuhachi', color: 'green', shape: 'continuous' },
+  { id: 'ocarina', name: 'Ocarina', color: 'green', shape: 'continuous' },
   
   // Percussions (Bleu)
   { id: 'marimba', name: 'Marimba', color: 'blue', shape: 'angular' },
   { id: 'timpani', name: 'Timbales', color: 'blue', shape: 'angular' },
   { id: 'tubular_bells', name: 'Cloches Tubulaires', color: 'blue', shape: 'angular' },
+  { id: 'xylophone', name: 'Xylophone', color: 'blue', shape: 'angular' },
+  { id: 'steel_drums', name: 'Steel Drum', color: 'blue', shape: 'angular' },
+  { id: 'dulcimer', name: 'Dulcimer', color: 'blue', shape: 'angular' },
   
   // Synthés / Chœurs (Violet)
   { id: 'choir_aahs', name: 'Chœurs (Aah)', color: 'purple', shape: 'continuous' },
-  { id: 'voice_oohs', name: 'Voix (Ooh)', color: 'purple', shape: 'continuous' },
+  { id: 'voice_oohs', name: 'Voix Humaine (Ooh)', color: 'purple', shape: 'continuous' },
   { id: 'synth_voice', name: 'Voix Synthétique', color: 'purple', shape: 'continuous' },
   { id: 'pad_1_new_age', name: 'Pad Atmosphérique', color: 'purple', shape: 'continuous' },
+  { id: 'pad_3_polysynth', name: 'Pad Polysynth', color: 'purple', shape: 'continuous' },
   { id: 'lead_1_square', name: 'Synthé Lead', color: 'purple', shape: 'continuous' },
+  { id: 'fx_4_atmosphere', name: 'FX Atmosphère', color: 'purple', shape: 'continuous' },
   
   // Défaut
   { id: 'acoustic_grand_piano', name: 'Piano à Queue', color: 'none', shape: 'angular' },

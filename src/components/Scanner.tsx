@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
-import { Play, Loader2, Camera as CameraIcon, RefreshCw, Upload, Music, Settings2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Play, Loader2, Camera as CameraIcon, RefreshCw, Upload, Music, Settings2, ChevronDown, ChevronUp, Mic } from 'lucide-react';
 import { GoogleGenAI, Type } from '@google/genai';
 import { MusicPlayer, generateMusicData, instrumentOptions, getDefaultInstrument } from '../utils/audio';
 import { Cylinder } from '../App';
@@ -23,6 +23,7 @@ export default function Scanner({ onSave }: ScannerProps) {
   
   // Modifiable parameters
   const [showSettings, setShowSettings] = useState(false);
+  const [withVoice, setWithVoice] = useState(false);
   const [selectedInstrument, setSelectedInstrument] = useState<string>('acoustic_grand_piano');
   const [accompInstrument, setAccompInstrument] = useState<string>('pad_1_new_age');
   const [baseOctave, setBaseOctave] = useState<number>(4);
@@ -208,10 +209,30 @@ Retourne UNIQUEMENT un JSON avec :
         setAccompInstrument(accompInstr);
         setBaseOctave(4);
 
+        let voiceAudioData = null;
+        if (withVoice) {
+          try {
+            const ttsResponse = await ai.models.generateContent({
+              model: "gemini-2.5-flash-preview-tts",
+              contents: [{ parts: [{ text: `Lis ce poème d'une voix douce, lente et mystérieuse : ${metadata.summary}` }] }],
+              config: {
+                responseModalities: ["AUDIO"],
+                speechConfig: {
+                  voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Aoede' } }
+                }
+              }
+            });
+            voiceAudioData = ttsResponse.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+          } catch (e) {
+            console.error("Voice generation failed:", e);
+          }
+        }
+
         const fullResult = {
           ...metadata,
           colorFamily: colors[0], // Keep for backward compatibility
-          contours: path
+          contours: path,
+          voiceAudio: voiceAudioData
         };
 
         setResult(fullResult);
@@ -258,11 +279,35 @@ Retourne UNIQUEMENT un JSON avec :
       clearInterval(progressInterval);
       setAudioLoadProgress(100);
       
-      setTimeout(() => {
+      setTimeout(async () => {
         setIsAudioLoading(false);
         setIsPlaying(true);
+        
+        // Play voice if available
+        let voiceSource: AudioBufferSourceNode | null = null;
+        if (result.voiceAudio) {
+          try {
+            const binaryString = window.atob(result.voiceAudio);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            const audioBuffer = await playerRef.current!.ac.decodeAudioData(bytes.buffer);
+            voiceSource = playerRef.current!.ac.createBufferSource();
+            voiceSource.buffer = audioBuffer;
+            voiceSource.connect(playerRef.current!.ac.destination);
+            voiceSource.start(0);
+          } catch (e) {
+            console.error("Failed to play voice audio", e);
+          }
+        }
+
         playerRef.current!.onEnded = () => {
           setIsPlaying(false);
+          if (voiceSource) {
+            try { voiceSource.stop(); } catch (e) {}
+          }
         };
         playerRef.current!.play(timeline);
       }, 300);
@@ -277,12 +322,15 @@ Retourne UNIQUEMENT un JSON avec :
         {!image ? (
           <>
             {cameraError ? (
-              <div 
-                className="flex flex-col items-center justify-center text-brass-600 cursor-pointer hover:text-brass-400 transition-colors w-full h-full p-4 text-center"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload size={48} className="mb-4 opacity-50 group-hover:opacity-100 transition-opacity" />
-                <p className="font-sans text-xs sm:text-sm uppercase tracking-widest font-medium">Caméra indisponible. Cliquez pour insérer.</p>
+              <div className="flex flex-col items-center justify-center w-full h-full p-4 text-center">
+                <Upload size={48} className="mb-4 opacity-50 text-brass-600" />
+                <p className="font-sans text-xs sm:text-sm uppercase tracking-widest font-medium text-brass-600 mb-4">Caméra indisponible. Cliquez pour insérer.</p>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                  className="px-6 py-2 bg-brass-500 text-white rounded-full hover:bg-brass-400 transition-colors shadow-lg"
+                >
+                  Choisir une image
+                </button>
               </div>
             ) : (
               <>
@@ -351,6 +399,22 @@ Retourne UNIQUEMENT un JSON avec :
         <canvas ref={canvasRef} className="hidden" />
       </div>
 
+      {!image && (
+        <div className="mt-4 flex items-center gap-2 bg-black/20 px-4 py-2 rounded-full border border-brass-500/30">
+          <input 
+            type="checkbox" 
+            id="voice-toggle" 
+            checked={withVoice}
+            onChange={(e) => setWithVoice(e.target.checked)}
+            className="accent-brass-500 w-4 h-4 cursor-pointer"
+          />
+          <label htmlFor="voice-toggle" className="text-xs sm:text-sm text-brass-300 cursor-pointer font-medium flex items-center gap-1">
+            <Mic size={14} />
+            Générer une voix narrative (IA)
+          </label>
+        </div>
+      )}
+
       {isScanning && (
         <div className="mt-6 sm:mt-8 flex items-center space-x-3 text-brass-400">
           <Loader2 className="animate-spin" />
@@ -393,6 +457,29 @@ Retourne UNIQUEMENT un JSON avec :
           
           <p className="text-sm sm:text-base italic mb-6 leading-relaxed text-ink/80 font-serif">"{result.summary}"</p>
           
+          <div className="mb-6 bg-black/5 p-4 rounded-lg border border-ink/10">
+            <h4 className="text-xs font-bold text-ink uppercase tracking-widest mb-3 border-b border-ink/10 pb-2">Composition du son</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-brass-500"></div>
+                <span className="text-ink/70">Mélodie :</span>
+                <span className="font-medium text-ink">{instrumentOptions.find(i => i.id === selectedInstrument)?.name || selectedInstrument}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-brass-400/50"></div>
+                <span className="text-ink/70">Accompagnement :</span>
+                <span className="font-medium text-ink">{instrumentOptions.find(i => i.id === accompInstrument)?.name || accompInstrument}</span>
+              </div>
+              {result.voiceAudio && (
+                <div className="flex items-center gap-2 sm:col-span-2">
+                  <Mic size={12} className="text-brass-600" />
+                  <span className="text-ink/70">Voix Narrative :</span>
+                  <span className="font-medium text-ink">Incantation IA</span>
+                </div>
+              )}
+            </div>
+          </div>
+
           {result.contours && result.contours.length > 0 ? (
             <div className="mb-6">
               <button 
