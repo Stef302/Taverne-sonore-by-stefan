@@ -14,6 +14,7 @@ interface ScannerProps {
 export default function Scanner({ onSave }: ScannerProps) {
   const [image, setImage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
   const [result, setResult] = useState<any | null>(null);
   const [cameraError, setCameraError] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -150,8 +151,17 @@ export default function Scanner({ onSave }: ScannerProps) {
   const handleScan = async (imageDataToScan: string) => {
     if (!imageDataToScan) return;
     setIsScanning(true);
+    setScanProgress(0);
     setResult(null);
     setShowSettings(false);
+
+    const progressInterval = setInterval(() => {
+      setScanProgress(prev => {
+        if (prev >= 95) return prev;
+        const increment = Math.random() * 12;
+        return Math.min(95, prev + increment);
+      });
+    }, 400);
 
     const path = await extractContours(imageDataToScan);
     setContourPath(path);
@@ -228,7 +238,11 @@ Retourne UNIQUEMENT un JSON avec :
       console.error("Scanning failed:", error);
       setResult({ summary: "L'automate a rencontré une erreur lors de la lecture du cylindre." });
     } finally {
-      setIsScanning(false);
+      clearInterval(progressInterval);
+      setScanProgress(100);
+      setTimeout(() => {
+        setIsScanning(false);
+      }, 500);
     }
   };
 
@@ -330,13 +344,23 @@ Retourne UNIQUEMENT un JSON avec :
       </div>
 
       {isScanning && (
-        <div className="mt-6 sm:mt-8 flex items-center space-x-3 text-brass-400">
-          <Loader2 className="animate-spin" />
-          <p className="uppercase tracking-widest text-xs sm:text-sm font-medium">Analyse des contours en cours...</p>
+        <div className="mt-6 sm:mt-8 flex flex-col items-center w-full max-w-md px-4">
+          <div className="flex items-center space-x-3 text-brass-400 mb-2">
+            <Loader2 className="animate-spin" />
+            <p className="uppercase tracking-widest text-xs sm:text-sm font-medium">
+              Analyse et composition... {Math.round(scanProgress)}%
+            </p>
+          </div>
+          <div className="w-full h-1.5 bg-ink/20 rounded-full overflow-hidden border border-brass-900/30">
+            <div 
+              className="h-full bg-brass-400 transition-all duration-300 ease-out shadow-[0_0_10px_#d4af37]"
+              style={{ width: `${scanProgress}%` }}
+            />
+          </div>
         </div>
       )}
 
-      {result && (
+      {result && !isScanning && (
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
