@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Camera, Library, BookOpen, Info } from 'lucide-react';
 import Scanner from './components/Scanner';
 import Gallery from './components/Gallery';
@@ -22,7 +22,21 @@ export interface Cylinder {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('scanner');
-  const [cylinders, setCylinders] = useState<Cylinder[]>([]);
+  const [cylinders, setCylinders] = useState<Cylinder[]>(() => {
+    const saved = localStorage.getItem('taverne_sonore_cylinders');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Failed to parse cylinders from local storage", e);
+      }
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('taverne_sonore_cylinders', JSON.stringify(cylinders));
+  }, [cylinders]);
 
   const handleSaveCylinder = (cylinder: Cylinder) => {
     setCylinders(prev => [cylinder, ...prev]);
