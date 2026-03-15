@@ -23,7 +23,6 @@ export default function Scanner({ onSave }: ScannerProps) {
   
   // Modifiable parameters
   const [showSettings, setShowSettings] = useState(false);
-  const [withVoice, setWithVoice] = useState(false);
   const [selectedInstrument, setSelectedInstrument] = useState<string>('acoustic_grand_piano');
   const [accompInstrument, setAccompInstrument] = useState<string>('pad_1_new_age');
   const [baseOctave, setBaseOctave] = useState<number>(4);
@@ -79,11 +78,46 @@ export default function Scanner({ onSave }: ScannerProps) {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      
+      const videoRect = video.getBoundingClientRect();
+      const videoWidth = video.videoWidth;
+      const videoHeight = video.videoHeight;
+      
+      const videoAspect = videoWidth / videoHeight;
+      const rectAspect = videoRect.width / videoRect.height;
+      
+      let drawWidth = videoWidth;
+      let drawHeight = videoHeight;
+      let offsetX = 0;
+      let offsetY = 0;
+      
+      if (videoAspect > rectAspect) {
+        drawWidth = videoHeight * rectAspect;
+        offsetX = (videoWidth - drawWidth) / 2;
+      } else {
+        drawHeight = videoWidth / rectAspect;
+        offsetY = (videoHeight - drawHeight) / 2;
+      }
+      
+      const frameWidth = videoRect.width * 0.9;
+      const frameHeight = frameWidth / 2;
+      
+      const frameLeft = (videoRect.width - frameWidth) / 2;
+      const frameTop = (videoRect.height - frameHeight) / 2;
+      
+      const scaleX = drawWidth / videoRect.width;
+      const scaleY = drawHeight / videoRect.height;
+      
+      const cropX = offsetX + frameLeft * scaleX;
+      const cropY = offsetY + frameTop * scaleY;
+      const cropWidth = frameWidth * scaleX;
+      const cropHeight = frameHeight * scaleY;
+      
+      canvas.width = cropWidth;
+      canvas.height = cropHeight;
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
         const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
         setImage(dataUrl);
         stopCamera();
@@ -209,30 +243,10 @@ Retourne UNIQUEMENT un JSON avec :
         setAccompInstrument(accompInstr);
         setBaseOctave(4);
 
-        let voiceAudioData = null;
-        if (withVoice) {
-          try {
-            const ttsResponse = await ai.models.generateContent({
-              model: "gemini-2.5-flash-preview-tts",
-              contents: [{ parts: [{ text: `Lis ce poème d'une voix douce, lente et mystérieuse : ${metadata.summary}` }] }],
-              config: {
-                responseModalities: ["AUDIO"],
-                speechConfig: {
-                  voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Aoede' } }
-                }
-              }
-            });
-            voiceAudioData = ttsResponse.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-          } catch (e) {
-            console.error("Voice generation failed:", e);
-          }
-        }
-
         const fullResult = {
           ...metadata,
           colorFamily: colors[0], // Keep for backward compatibility
-          contours: path,
-          voiceAudio: voiceAudioData
+          contours: path
         };
 
         setResult(fullResult);
@@ -269,7 +283,7 @@ Retourne UNIQUEMENT un JSON avec :
       });
     }, 300);
     
-    const timeline = generateMusicData(result.contours, result.shapeType, baseOctave);
+    const timeline = generateMusicData(result.contours, result.shapeType, baseOctave, result.colorFamily);
     
     try {
       await playerRef.current.load(selectedInstrument, accompInstrument);
@@ -283,31 +297,8 @@ Retourne UNIQUEMENT un JSON avec :
         setIsAudioLoading(false);
         setIsPlaying(true);
         
-        // Play voice if available
-        let voiceSource: AudioBufferSourceNode | null = null;
-        if (result.voiceAudio) {
-          try {
-            const binaryString = window.atob(result.voiceAudio);
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-              bytes[i] = binaryString.charCodeAt(i);
-            }
-            const audioBuffer = await playerRef.current!.ac.decodeAudioData(bytes.buffer);
-            voiceSource = playerRef.current!.ac.createBufferSource();
-            voiceSource.buffer = audioBuffer;
-            voiceSource.connect(playerRef.current!.ac.destination);
-            voiceSource.start(0);
-          } catch (e) {
-            console.error("Failed to play voice audio", e);
-          }
-        }
-
         playerRef.current!.onEnded = () => {
           setIsPlaying(false);
-          if (voiceSource) {
-            try { voiceSource.stop(); } catch (e) {}
-          }
         };
         playerRef.current!.play(timeline);
       }, 300);
@@ -399,22 +390,6 @@ Retourne UNIQUEMENT un JSON avec :
         <canvas ref={canvasRef} className="hidden" />
       </div>
 
-      {!image && (
-        <div className="mt-4 flex items-center gap-2 bg-black/20 px-4 py-2 rounded-full border border-brass-500/30">
-          <input 
-            type="checkbox" 
-            id="voice-toggle" 
-            checked={withVoice}
-            onChange={(e) => setWithVoice(e.target.checked)}
-            className="accent-brass-500 w-4 h-4 cursor-pointer"
-          />
-          <label htmlFor="voice-toggle" className="text-xs sm:text-sm text-brass-300 cursor-pointer font-medium flex items-center gap-1">
-            <Mic size={14} />
-            Générer une voix narrative (IA)
-          </label>
-        </div>
-      )}
-
       {isScanning && (
         <div className="mt-6 sm:mt-8 flex items-center space-x-3 text-brass-400">
           <Loader2 className="animate-spin" />
@@ -470,13 +445,6 @@ Retourne UNIQUEMENT un JSON avec :
                 <span className="text-ink/70">Accompagnement :</span>
                 <span className="font-medium text-ink">{instrumentOptions.find(i => i.id === accompInstrument)?.name || accompInstrument}</span>
               </div>
-              {result.voiceAudio && (
-                <div className="flex items-center gap-2 sm:col-span-2">
-                  <Mic size={12} className="text-brass-600" />
-                  <span className="text-ink/70">Voix Narrative :</span>
-                  <span className="font-medium text-ink">Incantation IA</span>
-                </div>
-              )}
             </div>
           </div>
 

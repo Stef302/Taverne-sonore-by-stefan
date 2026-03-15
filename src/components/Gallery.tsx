@@ -112,7 +112,7 @@ export default function Gallery({ cylinders, onDelete }: GalleryProps) {
       if (expandedCylinder.result.contours) {
         timeline = generateMusicData(expandedCylinder.result.contours, expandedCylinder.result.shapeType, octave);
       }
-      await exportAudio(timeline, instrument, accompInstrument);
+      await exportAudio(timeline, instrument, accompInstrument, expandedCylinder.result.voiceAudio);
     } catch (err) {
       console.error("Erreur lors de l'exportation:", err);
     } finally {
@@ -135,6 +135,11 @@ export default function Gallery({ cylinders, onDelete }: GalleryProps) {
       }
       
       await playerRef.current.load(instrument, accompInstrument);
+      if (expandedCylinder.result.voiceAudio) {
+        await playerRef.current.loadVoice(expandedCylinder.result.voiceAudio);
+      } else {
+        await playerRef.current.loadVoice(null);
+      }
       
       playerRef.current.onProgress = (time) => {
         const total = timeline.totalDuration || 60;

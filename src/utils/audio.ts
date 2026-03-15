@@ -84,17 +84,24 @@ export function getDefaultInstrument(colorFamily: string, shapeType: string): st
   return shapeType === 'continuous' ? 'pad_1_new_age' : 'acoustic_grand_piano';
 }
 
-export function mapYToNote(y: number, baseOctave: number = 4): string {
-  const pentatonic = ['C', 'D', 'E', 'G', 'A'];
+export function mapYToNote(y: number, baseOctave: number = 4, scale: string[] = ['C', 'D', 'E', 'G', 'A']): string {
   const invertedY = Math.max(0, Math.min(1, 1 - y));
-  const totalNotes = pentatonic.length * 3;
+  const totalNotes = scale.length * 3;
   const noteIndex = Math.floor(invertedY * (totalNotes - 1));
-  const octave = baseOctave + Math.floor(noteIndex / pentatonic.length);
-  const noteName = pentatonic[noteIndex % pentatonic.length];
+  const octave = baseOctave + Math.floor(noteIndex / scale.length);
+  const noteName = scale[noteIndex % scale.length];
   return `${noteName}${octave}`;
 }
 
-export function generateMusicData(contours: {x: number, y: number}[], shapeType: string, baseOctave: number = 4) {
+const scales = {
+  majorPentatonic: ['C', 'D', 'E', 'G', 'A'],
+  minorPentatonic: ['C', 'Eb', 'F', 'G', 'Bb'],
+  dorian: ['C', 'D', 'Eb', 'F', 'G', 'A', 'Bb'],
+  mixolydian: ['C', 'D', 'E', 'F', 'G', 'A', 'Bb'],
+  lydian: ['C', 'D', 'E', 'F#', 'G', 'A', 'B']
+};
+
+export function generateMusicData(contours: {x: number, y: number}[], shapeType: string, baseOctave: number = 4, colorFamily: string = 'none') {
   if (!contours || contours.length === 0 || shapeType === 'none') {
     return { melody: [], accompaniment: [], totalDuration: 0, info: {} };
   }
@@ -109,13 +116,30 @@ export function generateMusicData(contours: {x: number, y: number}[], shapeType:
   const targetDuration = spanX * 60; 
 
   // Quantize to a grid (e.g., 120 BPM = 0.5s per beat)
-  const bpm = isLegato ? 90 : 120;
+  const bpm = isLegato ? 85 : 110;
   const beatDuration = 60 / bpm;
+
+  // Choose scale based on color
+  let currentScale = scales.majorPentatonic;
+  let scaleName = "Pentatonique Majeure";
+  if (colorFamily === 'blue' || colorFamily === 'purple') {
+    currentScale = scales.minorPentatonic;
+    scaleName = "Pentatonique Mineure";
+  } else if (colorFamily === 'red') {
+    currentScale = scales.mixolydian;
+    scaleName = "Mixolydien";
+  } else if (colorFamily === 'green') {
+    currentScale = scales.dorian;
+    scaleName = "Dorien";
+  } else if (colorFamily === 'yellow') {
+    currentScale = scales.lydian;
+    scaleName = "Lydien";
+  }
 
   const rawMelody: any[] = [];
 
   // Generate Melody
-  contours.forEach((p) => {
+  contours.forEach((p, index) => {
     // Normalize X to 0-1 relative to the line itself, then scale to targetDuration
     const normalizedX = (p.x - minX) / spanX;
     let rawTime = normalizedX * targetDuration;
@@ -124,11 +148,26 @@ export function generateMusicData(contours: {x: number, y: number}[], shapeType:
     const step = beatDuration / 4;
     const time = Math.round(rawTime / step) * step;
 
+    // Calculate velocity based on Y (higher = louder) and some randomness
+    const baseVolume = 0.6 + (1 - p.y) * 0.3;
+    const volume = Math.max(0.3, Math.min(1.0, baseVolume + (Math.random() * 0.2 - 0.1)));
+
+    // Calculate duration based on distance to next point
+    let duration = isLegato ? beatDuration : beatDuration / 2;
+    if (index < contours.length - 1) {
+      const nextNormalizedX = (contours[index+1].x - minX) / spanX;
+      const nextTime = Math.round((nextNormalizedX * targetDuration) / step) * step;
+      const timeDiff = nextTime - time;
+      if (timeDiff > 0) {
+        duration = isLegato ? Math.min(timeDiff, beatDuration * 2) : Math.min(timeDiff * 0.8, beatDuration);
+      }
+    }
+
     rawMelody.push({
       time: time,
-      note: mapYToNote(p.y, baseOctave),
-      duration: isLegato ? beatDuration : beatDuration / 2,
-      volume: 0.8
+      note: mapYToNote(p.y, baseOctave, currentScale),
+      duration: Math.max(0.1, duration),
+      volume: volume
     });
   });
 
@@ -156,38 +195,41 @@ export function generateMusicData(contours: {x: number, y: number}[], shapeType:
     const measureTime = m * beatDuration * 4;
     if (measureTime >= targetDuration) break;
 
-    // Find the average Y of the melody in this measure to determine the chord
-    const notesInMeasure = melody.filter(n => n.time >= measureTime && n.time < measureTime + beatDuration * 4);
-    let avgY = 0.5;
-    if (notesInMeasure.length > 0) {
-      const prog = [0.8, 0.6, 0.5, 0.6]; // Root, IV, V, IV roughly
-      avgY = prog[m % prog.length];
-    }
+    // Simple progression: I - vi - IV - V
+    const prog = [0.8, 0.4, 0.6, 0.5]; 
+    const avgY = prog[m % prog.length];
 
-    const rootNote = mapYToNote(avgY, baseOctave - 1);
-    const thirdNote = mapYToNote(avgY - 0.15, baseOctave - 1);
-    const fifthNote = mapYToNote(avgY - 0.3, baseOctave - 1);
+    const rootNote = mapYToNote(avgY, baseOctave - 1, currentScale);
+    const thirdNote = mapYToNote(avgY - 0.15, baseOctave - 1, currentScale);
+    const fifthNote = mapYToNote(avgY - 0.3, baseOctave - 1, currentScale);
 
     if (isLegato) {
-      // Long, soft chords for continuous lines
-      accompaniment.push({ time: measureTime, note: rootNote, duration: beatDuration * 4, volume: 0.25 });
-      accompaniment.push({ time: measureTime, note: thirdNote, duration: beatDuration * 4, volume: 0.2 });
-      accompaniment.push({ time: measureTime, note: fifthNote, duration: beatDuration * 4, volume: 0.2 });
+      // Arpeggiated chords for continuous lines
+      accompaniment.push({ time: measureTime, note: rootNote, duration: beatDuration * 4, volume: 0.3 });
+      accompaniment.push({ time: measureTime + beatDuration, note: fifthNote, duration: beatDuration * 3, volume: 0.25 });
+      accompaniment.push({ time: measureTime + beatDuration * 2, note: thirdNote, duration: beatDuration * 2, volume: 0.25 });
+      accompaniment.push({ time: measureTime + beatDuration * 3, note: fifthNote, duration: beatDuration, volume: 0.2 });
     } else {
-      // Shorter, rhythmic chords for angular lines (e.g., on beats 1 and 3)
-      const staccatoDuration = beatDuration * 0.5;
-      const vol = 0.35; // slightly louder for staccato
+      // Rhythmic chords
+      const staccatoDuration = beatDuration * 0.3;
+      const vol = 0.4;
       
-      // Beat 1
+      // Beat 1 (Root)
       accompaniment.push({ time: measureTime, note: rootNote, duration: staccatoDuration, volume: vol });
-      accompaniment.push({ time: measureTime, note: thirdNote, duration: staccatoDuration, volume: vol });
-      accompaniment.push({ time: measureTime, note: fifthNote, duration: staccatoDuration, volume: vol });
       
-      // Beat 3
+      // Beat 2 (Chord)
+      accompaniment.push({ time: measureTime + beatDuration, note: thirdNote, duration: staccatoDuration, volume: vol * 0.8 });
+      accompaniment.push({ time: measureTime + beatDuration, note: fifthNote, duration: staccatoDuration, volume: vol * 0.8 });
+      
+      // Beat 3 (Root)
       if (measureTime + beatDuration * 2 < targetDuration) {
         accompaniment.push({ time: measureTime + beatDuration * 2, note: rootNote, duration: staccatoDuration, volume: vol });
-        accompaniment.push({ time: measureTime + beatDuration * 2, note: thirdNote, duration: staccatoDuration, volume: vol });
-        accompaniment.push({ time: measureTime + beatDuration * 2, note: fifthNote, duration: staccatoDuration, volume: vol });
+      }
+      
+      // Beat 4 (Chord)
+      if (measureTime + beatDuration * 3 < targetDuration) {
+        accompaniment.push({ time: measureTime + beatDuration * 3, note: thirdNote, duration: staccatoDuration, volume: vol * 0.8 });
+        accompaniment.push({ time: measureTime + beatDuration * 3, note: fifthNote, duration: staccatoDuration, volume: vol * 0.8 });
       }
     }
   }
@@ -198,7 +240,7 @@ export function generateMusicData(contours: {x: number, y: number}[], shapeType:
     totalDuration: targetDuration,
     info: {
       tempo: bpm,
-      scale: "Pentatonique Majeure",
+      scale: scaleName,
       noteCount: melody.length + accompaniment.length
     }
   };
