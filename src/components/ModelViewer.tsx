@@ -78,7 +78,7 @@ export default function ModelViewer() {
         <Canvas dpr={[1, 1.5]} camera={{ fov: 50 }} performance={{ min: 0.5 }}>
           <Suspense fallback={<LoadingFallback />}>
             {/* adjustCamera > 1 permet de dézoomer (1.8 = plus loin). shadows={false} améliore grandement la fluidité */}
-            <Stage environment="city" intensity={0.6} adjustCamera={1.8} shadows={false}>
+            <Stage environment="city" intensity={0.35} adjustCamera={1.8} shadows={false}>
               <MyCustomModel />
             </Stage>
           </Suspense>
