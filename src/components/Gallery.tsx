@@ -51,8 +51,8 @@ function CylinderCard({ cylinder, onClick }: { cylinder: Cylinder, onClick: () =
         
         <h3 className="font-bold text-ink font-serif text-center z-10 text-lg drop-shadow-sm">{cylinder.title}</h3>
         
-        <div className="w-16 h-16 rounded-full border-2 border-brass-500/50 flex items-center justify-center z-10 bg-parchment-100/80 backdrop-blur-sm group-hover:scale-110 transition-transform">
-          <Music className="text-brass-600" size={28} />
+        <div className="w-16 h-16 rounded-full border-2 border-white flex items-center justify-center z-10 bg-parchment-100/80 backdrop-blur-sm group-hover:scale-110 transition-transform">
+          <Music className="text-ink" size={28} />
         </div>
         
         <div className="z-10 text-center w-full bg-parchment-100/90 py-1 rounded-sm border border-ink/10">
@@ -112,7 +112,7 @@ export default function Gallery({ cylinders, onDelete }: GalleryProps) {
       if (expandedCylinder.result.contours) {
         timeline = generateMusicData(expandedCylinder.result.contours, expandedCylinder.result.shapeType, octave);
       }
-      await exportAudio(timeline, instrument, accompInstrument, expandedCylinder.result.voiceAudio);
+      await exportAudio(timeline, instrument, accompInstrument);
     } catch (err) {
       console.error("Erreur lors de l'exportation:", err);
     } finally {
@@ -135,11 +135,6 @@ export default function Gallery({ cylinders, onDelete }: GalleryProps) {
       }
       
       await playerRef.current.load(instrument, accompInstrument);
-      if (expandedCylinder.result.voiceAudio) {
-        await playerRef.current.loadVoice(expandedCylinder.result.voiceAudio);
-      } else {
-        await playerRef.current.loadVoice(null);
-      }
       
       playerRef.current.onProgress = (time) => {
         const total = timeline.totalDuration || 60;
@@ -212,8 +207,8 @@ export default function Gallery({ cylinders, onDelete }: GalleryProps) {
   if (cylinders.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full min-h-[500px] text-center px-4">
-        <LibraryIcon size={48} className="text-brass-400 mb-4 opacity-50" />
-        <h2 className="text-xl sm:text-2xl font-bold text-brass-400 mb-4 font-serif">Archives Vides</h2>
+        <LibraryIcon size={48} className="text-white mb-4 opacity-50" />
+        <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 font-serif">Archives Vides</h2>
         <p className="text-parchment-400 max-w-md italic font-serif">
           Vos cylindres sonores apparaîtront ici une fois que vous aurez scanné et interprété vos premières partitions.
         </p>
@@ -227,7 +222,7 @@ export default function Gallery({ cylinders, onDelete }: GalleryProps) {
 
   return (
     <div className="w-full pb-24 relative">
-      <h2 className="text-xl sm:text-2xl font-bold text-brass-400 mb-8 text-center font-serif">Archives des Cylindres</h2>
+      <h2 className="text-xl sm:text-2xl font-bold text-white mb-8 text-center font-serif">Archives des Cylindres</h2>
       
       {/* Grid of Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 px-2">
@@ -306,7 +301,7 @@ export default function Gallery({ cylinders, onDelete }: GalleryProps) {
                   {/* Scanning line animation when playing */}
                   {playbackState === 'playing' && (
                     <motion.div 
-                      className="absolute top-0 bottom-0 w-1 bg-brass-500 shadow-[0_0_10px_rgba(212,175,55,0.8)]"
+                      className="absolute top-0 bottom-0 w-1 bg-white"
                       style={{ left: `${progress}%` }}
                     />
                   )}
@@ -336,13 +331,13 @@ export default function Gallery({ cylinders, onDelete }: GalleryProps) {
                     />
                     <div className="w-full h-2 bg-ink/10 rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-brass-500 transition-all duration-75 ease-linear"
+                        className="h-full bg-brass-400 transition-all duration-75 ease-linear"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
                     {/* Thumb visual */}
                     <div 
-                      className="absolute h-4 w-4 bg-brass-600 rounded-full shadow-md transform -translate-x-1/2 pointer-events-none group-hover:scale-110 transition-transform"
+                      className="absolute h-4 w-4 bg-brass-400 rounded-full transform -translate-x-1/2 pointer-events-none group-hover:scale-110 transition-transform"
                       style={{ left: `${progress}%` }}
                     />
                   </div>
@@ -361,7 +356,7 @@ export default function Gallery({ cylinders, onDelete }: GalleryProps) {
                     <button 
                       onClick={handlePlayPause}
                       disabled={isLoading}
-                      className={`w-14 h-14 bg-brass-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-brass-500 hover:scale-105 transition-all ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`w-14 h-14 bg-white text-ink rounded-full flex items-center justify-center hover:bg-parchment-200 hover:scale-105 transition-all ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       title={playbackState === 'playing' ? 'Pause' : 'Lecture'}
                     >
                       {isLoading ? <Loader2 size={24} className="animate-spin" /> : 
@@ -442,7 +437,7 @@ export default function Gallery({ cylinders, onDelete }: GalleryProps) {
                             <select 
                               value={selectedInstruments[expandedCylinder.id] || expandedCylinder.instrument || 'acoustic_grand_piano'}
                               onChange={(e) => handleInstrumentChange(expandedCylinder.id, e.target.value)}
-                              className="w-full bg-parchment-100 border border-ink/20 rounded-md py-2 px-3 text-sm text-ink focus:outline-none focus:border-brass-500"
+                              className="w-full bg-parchment-100 border border-ink/20 rounded-md py-2 px-3 text-sm text-ink focus:outline-none focus:border-white focus:ring-1 focus:ring-white"
                             >
                               {instrumentOptions.map(opt => (
                                 <option key={opt.id} value={opt.id}>{opt.name}</option>

@@ -9,9 +9,10 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 interface ScannerProps {
   onSave: (cylinder: Cylinder) => void;
+  onUpdate: (id: string, updatedResult: any) => void;
 }
 
-export default function Scanner({ onSave }: ScannerProps) {
+export default function Scanner({ onSave, onUpdate }: ScannerProps) {
   const [image, setImage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState<any | null>(null);
@@ -307,18 +308,18 @@ Retourne UNIQUEMENT un JSON avec :
 
   return (
     <div className="flex flex-col items-center w-full h-full pb-24">
-      <h2 className="text-xl sm:text-2xl font-bold text-brass-400 mb-4 sm:mb-6 text-center font-serif">Le Viseur Optique</h2>
+      <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 text-center font-serif">Le Viseur Optique</h2>
       
-      <div className="relative w-full max-w-2xl aspect-[4/3] sm:aspect-[2/1] bg-black brass-border overflow-hidden flex items-center justify-center group">
+      <div className="relative w-full max-w-2xl aspect-[4/3] sm:aspect-[2/1] bg-black theme-border overflow-hidden flex items-center justify-center group">
         {!image ? (
           <>
             {cameraError ? (
               <div className="flex flex-col items-center justify-center w-full h-full p-4 text-center">
-                <Upload size={48} className="mb-4 opacity-50 text-brass-600" />
-                <p className="font-sans text-xs sm:text-sm uppercase tracking-widest font-medium text-brass-600 mb-4">Caméra indisponible. Cliquez pour insérer.</p>
+                <Upload size={48} className="mb-4 opacity-80 text-brass-400" />
+                <p className="font-sans text-xs sm:text-sm uppercase tracking-widest font-medium text-white/60 mb-4">Caméra indisponible. Cliquez pour insérer.</p>
                 <button 
                   onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
-                  className="px-6 py-2 bg-brass-500 text-white rounded-full hover:bg-brass-400 transition-colors shadow-lg"
+                  className="px-6 py-2 bg-brass-500 text-white rounded-full hover:bg-brass-400 transition-colors"
                 >
                   Choisir une image
                 </button>
@@ -332,14 +333,14 @@ Retourne UNIQUEMENT un JSON avec :
                   muted 
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 border-[4px] sm:border-[8px] border-black/40 pointer-events-none"></div>
+                <div className="absolute inset-0 border-[4px] sm:border-[8px] border-white/90 pointer-events-none"></div>
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-[90%] aspect-[2/1] border-2 border-dashed border-brass-400/70 rounded-lg"></div>
+                  <div className="w-[90%] aspect-[2/1] border-2 border-dashed border-white/90 rounded-lg"></div>
                 </div>
                 
                 <button 
                   onClick={captureImage}
-                  className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-brass-500 text-white rounded-full p-4 shadow-lg hover:bg-brass-400 hover:scale-105 transition-all"
+                  className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-brass-500 text-white rounded-full p-4 hover:bg-brass-400 hover:scale-105 transition-all"
                 >
                   <CameraIcon size={28} fill="currentColor" />
                 </button>
@@ -353,7 +354,7 @@ Retourne UNIQUEMENT un JSON avec :
             {isScanning && (
               <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
                 <motion.div 
-                  className="absolute top-0 bottom-0 w-1 bg-brass-400 shadow-[0_0_15px_#d4af37]"
+                  className="absolute top-0 bottom-0 w-1 bg-brass-400 shadow-[0_0_15px_#32CD32]"
                   initial={{ left: '-10%' }}
                   animate={{ left: '110%' }}
                   transition={{ duration: 2.5, ease: "linear", repeat: Infinity }}
@@ -361,7 +362,7 @@ Retourne UNIQUEMENT un JSON avec :
                 
                 {contourPath.length > 0 && (
                   <motion.div
-                    className="absolute w-12 h-12 border border-brass-400/80 rounded-full flex items-center justify-center -ml-6 -mt-6"
+                    className="absolute w-12 h-12 border border-white/90 rounded-full flex items-center justify-center -ml-6 -mt-6"
                     animate={{
                       left: contourPath.map(p => `${p.x * 100}%`),
                       top: contourPath.map(p => `${p.y * 100}%`),
@@ -369,13 +370,13 @@ Retourne UNIQUEMENT un JSON avec :
                     }}
                     transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                   >
-                    <div className="w-1 h-1 bg-brass-300 rounded-full shadow-[0_0_10px_#fde68a]"></div>
+                    <div className="w-1 h-1 bg-brass-300 rounded-full shadow-[0_0_10px_#5eff5e]"></div>
                     <div className="absolute w-full h-px bg-brass-400/50"></div>
                     <div className="absolute h-full w-px bg-brass-400/50"></div>
                   </motion.div>
                 )}
                 
-                <div className="absolute inset-0 bg-brass-500/10 mix-blend-color-burn animate-pulse"></div>
+                <div className="absolute inset-0 bg-brass-500/10 mix-blend-overlay animate-pulse"></div>
               </div>
             )}
           </>
@@ -412,7 +413,7 @@ Retourne UNIQUEMENT un JSON avec :
                 <button 
                   onClick={handlePlay}
                   disabled={isPlaying || isAudioLoading || result.contours.length === 0}
-                  className={`flex items-center justify-center gap-2 px-6 py-2 rounded-full font-medium text-sm transition-all shadow-md ${isPlaying || isAudioLoading || result.contours.length === 0 ? 'bg-brass-600 text-white/50 cursor-not-allowed' : 'bg-brass-500 text-white hover:bg-brass-400 hover:scale-105'}`}
+                  className={`flex items-center justify-center gap-2 px-6 py-2 rounded-full font-medium text-sm transition-all ${isPlaying || isAudioLoading || result.contours.length === 0 ? 'bg-white/10 text-white/50 cursor-not-allowed' : 'bg-brass-500 text-white hover:bg-brass-400 hover:scale-105'}`}
                 >
                   {isAudioLoading ? <Loader2 className="animate-spin" size={16} /> : (isPlaying ? <Music size={16} className="animate-pulse" /> : <Play size={16} />)}
                   {isAudioLoading ? `Chargement... ${Math.round(audioLoadProgress)}%` : (isPlaying ? "Lecture en cours..." : "Écouter l'œuvre")}
@@ -421,7 +422,7 @@ Retourne UNIQUEMENT un JSON avec :
                 {isAudioLoading && (
                   <div className="w-full h-1 bg-ink/10 rounded-full overflow-hidden mt-1">
                     <div 
-                      className="h-full bg-brass-400 transition-all duration-300 ease-out"
+                      className="h-full bg-brass-400 shadow-[0_0_8px_#32CD32] transition-all duration-300 ease-out"
                       style={{ width: `${audioLoadProgress}%` }}
                     />
                   </div>
@@ -436,12 +437,12 @@ Retourne UNIQUEMENT un JSON avec :
             <h4 className="text-xs font-bold text-ink uppercase tracking-widest mb-3 border-b border-ink/10 pb-2">Composition du son</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-brass-500"></div>
+                <div className="w-2 h-2 rounded-full bg-brass-400 shadow-[0_0_5px_#32CD32]"></div>
                 <span className="text-ink/70">Mélodie :</span>
                 <span className="font-medium text-ink">{instrumentOptions.find(i => i.id === selectedInstrument)?.name || selectedInstrument}</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-brass-400/50"></div>
+                <div className="w-2 h-2 rounded-full bg-brass-600"></div>
                 <span className="text-ink/70">Accompagnement :</span>
                 <span className="font-medium text-ink">{instrumentOptions.find(i => i.id === accompInstrument)?.name || accompInstrument}</span>
               </div>
@@ -471,7 +472,7 @@ Retourne UNIQUEMENT un JSON avec :
                       <select 
                         value={selectedInstrument}
                         onChange={(e) => setSelectedInstrument(e.target.value)}
-                        className="w-full bg-parchment-100 border border-ink/20 rounded-md py-2 px-3 text-sm text-ink focus:outline-none focus:border-brass-500"
+                        className="w-full bg-parchment-100 border border-ink/20 rounded-md py-2 px-3 text-sm text-ink focus:outline-none focus:border-white focus:ring-1 focus:ring-white"
                       >
                         {instrumentOptions.map(opt => (
                           <option key={opt.id} value={opt.id}>{opt.name}</option>

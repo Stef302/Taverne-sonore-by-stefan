@@ -13,7 +13,7 @@ export default function Manual() {
   return (
     <div className="flex flex-col items-center w-full max-w-2xl mx-auto pb-8">
       <div className="text-center mb-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-brass-400 mb-2 font-serif">Le Grand Manuel</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 font-serif">Le Grand Manuel</h2>
         <p className="text-parchment-400 italic text-sm font-serif">Traité d'Interprétation Graphique & Musicale</p>
       </div>
 
@@ -21,19 +21,19 @@ export default function Manual() {
         
         {/* Introduction */}
         <section>
-          <p className="text-ink/80 leading-relaxed text-sm sm:text-base first-letter:text-4xl first-letter:font-serif first-letter:font-bold first-letter:text-brass-600 first-letter:mr-1 first-letter:float-left">
-            La Taverne Sonore n'est pas un simple lecteur, c'est un automate d'interprétation. Il ne lit pas des notes, il traduit des gestes. Votre dessin est une partition émotionnelle que l'intelligence artificielle va sculpter en ondes sonores. Pour maîtriser cet instrument, il convient d'en comprendre la grammaire.
+          <p className="text-ink/80 leading-relaxed text-sm sm:text-base first-letter:text-4xl first-letter:font-serif first-letter:font-bold first-letter:text-ink first-letter:mr-1 first-letter:float-left">
+            <span className="text-green-700 font-bold">La Taverne Sonore</span> n'est pas un simple lecteur, c'est un <span className="text-red-700 font-bold">automate d'interprétation</span>. Il ne lit pas des notes, il traduit des gestes. Votre dessin est une <span className="text-green-700 font-bold">partition émotionnelle</span> que l'intelligence artificielle va sculpter en <span className="text-red-700 font-bold">ondes sonores</span>. Pour maîtriser cet instrument, il convient d'en comprendre la grammaire.
           </p>
         </section>
 
         {/* Le Format */}
         <section>
           <h3 className="flex items-center gap-2 text-xl font-serif font-bold text-ink mb-4 border-b border-ink/10 pb-2">
-            <BookOpen className="text-brass-500" size={20} />
+            <BookOpen className="text-ink" size={20} />
             Le Support Physique
           </h3>
           <p className="text-ink/80 text-sm sm:text-base leading-relaxed mb-4">
-            L'automate est calibré pour analyser un rectangle strict de <strong>80 millimètres de largeur sur 40 millimètres de hauteur</strong> (ratio 2:1). Tout ce qui dépasse de ce cadre sera ignoré par l'œil optique.
+            L'automate est calibré pour analyser un rectangle strict de <strong className="text-green-700">80 millimètres de largeur</strong> sur <strong className="text-red-700">40 millimètres de hauteur</strong> (ratio 2:1). Tout ce qui dépasse de ce cadre sera ignoré par l'œil optique.
           </p>
           <div className="w-full aspect-[2/1] border-2 border-dashed border-ink/30 rounded-lg flex items-center justify-center bg-white/50">
             <span className="font-mono text-ink/40 text-sm tracking-widest">ZONE DE DESSIN (80x40)</span>
@@ -43,20 +43,20 @@ export default function Manual() {
         {/* Espace et Temps */}
         <section>
           <h3 className="flex items-center gap-2 text-xl font-serif font-bold text-ink mb-4 border-b border-ink/10 pb-2">
-            <Clock className="text-brass-500" size={20} />
+            <Clock className="text-ink" size={20} />
             L'Espace et le Temps
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="bg-white/40 p-4 rounded-lg border border-ink/5">
-              <h4 className="font-bold text-ink mb-2 text-sm uppercase tracking-wider">L'Axe Horizontal (Temps)</h4>
+              <h4 className="font-bold text-ink mb-2 text-sm uppercase tracking-wider"><span className="text-red-700">L'Axe Horizontal</span> (Temps)</h4>
               <p className="text-ink/70 text-sm leading-relaxed">
-                La lecture s'effectue de gauche à droite. Les 80mm de largeur représentent une durée maximale de <strong>60 secondes</strong>. Un trait qui traverse toute la carte durera une minute. Un petit trait au centre créera un silence, puis un son bref, puis un silence.
+                La lecture s'effectue de gauche à droite. Les 80mm de largeur représentent une durée maximale de <strong className="text-red-700">60 secondes</strong>. Un trait qui traverse toute la carte durera une minute. Un petit trait au centre créera un silence, puis un son bref, puis un silence.
               </p>
             </div>
             <div className="bg-white/40 p-4 rounded-lg border border-ink/5">
-              <h4 className="font-bold text-ink mb-2 text-sm uppercase tracking-wider">L'Axe Vertical (Hauteur)</h4>
+              <h4 className="font-bold text-ink mb-2 text-sm uppercase tracking-wider"><span className="text-green-700">L'Axe Vertical</span> (Hauteur)</h4>
               <p className="text-ink/70 text-sm leading-relaxed">
-                La hauteur de votre trait définit la fréquence (la note). Le bas de la carte (0mm) correspond aux fréquences graves (basses, violoncelles). Le haut de la carte (40mm) correspond aux fréquences aiguës (flûtes, violons).
+                La hauteur de votre trait définit la <strong className="text-green-700">fréquence</strong> (la note). Le bas de la carte (0mm) correspond aux fréquences graves (basses, violoncelles). Le haut de la carte (40mm) correspond aux fréquences aiguës (flûtes, violons).
               </p>
             </div>
           </div>
@@ -65,7 +65,7 @@ export default function Manual() {
         {/* Morphologie */}
         <section>
           <h3 className="flex items-center gap-2 text-xl font-serif font-bold text-ink mb-4 border-b border-ink/10 pb-2">
-            <PenTool className="text-brass-500" size={20} />
+            <PenTool className="text-ink" size={20} />
             La Morphologie du Trait
           </h3>
           <p className="text-ink/80 text-sm sm:text-base leading-relaxed mb-6">
@@ -81,7 +81,7 @@ export default function Manual() {
               </div>
               <div>
                 <h4 className="font-bold text-ink text-sm">Traits Courbes & Ondulations</h4>
-                <p className="text-ink/70 text-sm mt-1">Génère une mélodie <strong>Legato</strong> (liée, fluide). L'automate déduira un accompagnement atmosphérique, fait de nappes sonores et de réverbération. Idéal pour la mélancolie et le rêve.</p>
+                <p className="text-ink/70 text-sm mt-1">Génère une mélodie <strong className="text-green-700">Legato</strong> (liée, fluide). L'automate déduira un accompagnement atmosphérique, fait de nappes sonores et de réverbération. Idéal pour la mélancolie et le rêve.</p>
               </div>
             </div>
 
@@ -93,7 +93,7 @@ export default function Manual() {
               </div>
               <div>
                 <h4 className="font-bold text-ink text-sm">Traits Anguleux & Droits</h4>
-                <p className="text-ink/70 text-sm mt-1">Génère une mélodie <strong>Staccato</strong> (détachée, piquante). L'automate construira un accompagnement rythmique, mécanique, souvent soutenu par des percussions boisées ou des pizzicatos.</p>
+                <p className="text-ink/70 text-sm mt-1">Génère une mélodie <strong className="text-red-700">Staccato</strong> (détachée, piquante). L'automate construira un accompagnement rythmique, mécanique, souvent soutenu par des percussions boisées ou des pizzicatos.</p>
               </div>
             </div>
           </div>
@@ -102,16 +102,16 @@ export default function Manual() {
         {/* Dynamique */}
         <section>
           <h3 className="flex items-center gap-2 text-xl font-serif font-bold text-ink mb-4 border-b border-ink/10 pb-2">
-            <Activity className="text-brass-500" size={20} />
+            <Activity className="text-ink" size={20} />
             La Dynamique (Les Ronds)
           </h3>
           <p className="text-ink/80 text-sm sm:text-base leading-relaxed mb-4">
-            L'intensité sonore (le volume) n'est pas définie par la pression du stylo, mais par la <strong>masse d'encre</strong> déposée sous forme de cercles ou de points.
+            L'intensité sonore (le volume) n'est pas définie par la pression du stylo, mais par la <strong className="text-red-700">masse d'encre</strong> déposée sous forme de cercles ou de points.
           </p>
           <div className="flex items-center justify-between bg-white/40 p-6 rounded-lg border border-ink/5">
             <div className="flex flex-col items-center gap-2">
               <div className="w-2 h-2 bg-ink rounded-full"></div>
-              <span className="text-xs font-mono font-bold text-ink/60">Pianissimo (pp)</span>
+              <span className="text-xs font-mono font-bold text-green-700">Pianissimo (pp)</span>
             </div>
             <div className="flex-1 h-px bg-gradient-to-r from-ink/20 to-ink/60 mx-4"></div>
             <div className="flex flex-col items-center gap-2">
@@ -121,7 +121,7 @@ export default function Manual() {
             <div className="flex-1 h-px bg-gradient-to-r from-ink/60 to-ink mx-4"></div>
             <div className="flex flex-col items-center gap-2">
               <div className="w-12 h-12 bg-ink rounded-full"></div>
-              <span className="text-xs font-mono font-bold text-ink">Fortissimo (ff)</span>
+              <span className="text-xs font-mono font-bold text-red-700">Fortissimo (ff)</span>
             </div>
           </div>
         </section>
@@ -129,7 +129,7 @@ export default function Manual() {
         {/* Couleurs */}
         <section>
           <h3 className="flex items-center gap-2 text-xl font-serif font-bold text-ink mb-4 border-b border-ink/10 pb-2">
-            <Palette className="text-brass-500" size={20} />
+            <Palette className="text-ink" size={20} />
             L'Orchestration Chromatique
           </h3>
           <p className="text-ink/80 text-sm sm:text-base leading-relaxed mb-6">
@@ -144,7 +144,7 @@ export default function Manual() {
                   style={{ backgroundColor: color.hex }}
                 />
                 <div>
-                  <h4 className="font-bold text-ink text-sm">{color.family}</h4>
+                  <h4 className="font-bold text-sm" style={{ color: color.hex }}>{color.family}</h4>
                   <p className="text-ink/70 text-xs sm:text-sm mt-1 leading-relaxed">{color.desc}</p>
                 </div>
               </div>

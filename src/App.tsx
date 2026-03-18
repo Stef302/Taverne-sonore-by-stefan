@@ -9,6 +9,7 @@ import Scanner from './components/Scanner';
 import Gallery from './components/Gallery';
 import Manual from './components/Manual';
 import SettingsPanel from './components/SettingsPanel';
+import BackgroundDecorations from './components/BackgroundDecorations';
 
 export interface Cylinder {
   id: string;
@@ -51,9 +52,10 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-mahogany-900 text-parchment-200 overflow-hidden">
+    <div className="h-screen flex flex-col bg-mahogany-900 text-parchment-200 overflow-hidden relative">
+      <BackgroundDecorations />
       {/* Header */}
-      <header className="pt-8 pb-4 px-4 text-center z-10 bg-mahogany-900/80 backdrop-blur-md border-b border-white/5">
+      <header className="pt-8 pb-4 px-4 text-center z-10 bg-mahogany-900/80 backdrop-blur-md border-b border-white/90 shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
         <h1 className="text-2xl sm:text-3xl font-bold text-brass-400 tracking-wide font-serif">
           La Taverne Sonore
         </h1>
@@ -68,7 +70,7 @@ export default function App() {
       </main>
 
       {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 w-full bg-mahogany-800/95 backdrop-blur-xl border-t border-white/10 pb-safe z-50">
+      <nav className="fixed bottom-0 w-full bg-mahogany-800/95 backdrop-blur-xl border-t border-white/90 shadow-[0_-4px_20px_rgba(0,0,0,0.3)] pb-safe z-50">
         <div className="flex justify-around items-center h-16 max-w-md mx-auto px-2">
           {[
             { id: 'scanner', icon: Camera, label: 'Scanner' },
@@ -82,7 +84,7 @@ export default function App() {
               className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
                 activeTab === tab.id
                   ? 'text-brass-400'
-                  : 'text-parchment-400 hover:text-brass-300'
+                  : 'text-parchment-400 hover:text-white'
               }`}
             >
               <tab.icon size={22} strokeWidth={activeTab === tab.id ? 2.5 : 2} />
